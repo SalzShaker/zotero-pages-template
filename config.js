@@ -14,7 +14,19 @@ const CONFIG = {
   libraryId: "21774691",          // dh_unibe (open group of DH Bern)
 
   // Optional: only one collection (the 8-character key in the collection's URL), "" = whole library
-  collectionKey: "BT3NCKZK",     // dh_unibe → lecture-introduction
+  collectionKey: "YUEU5V7F",     // dh_unibe → lecture-introduction
+
+  // Optional: only one collection (the 8-character key in the collection's URL), "" = whole library
+  collectionKey: "FF2E884P",     // dh_unibe → lecture-introduction
+
+  // Optional: only one collection (the 8-character key in the collection's URL), "" = whole library
+  collectionKey: "3F98HJK2",     // dh_unibe → lecture-introduction
+
+  // Optional: only one collection (the 8-character key in the collection's URL), "" = whole library
+  collectionKey: "5HSFP2Z9",     // dh_unibe → lecture-introduction
+
+  // Optional: only one collection (the 8-character key in the collection's URL), "" = whole library
+  collectionKey: "HP3PQDC7",     // dh_unibe → lecture-introduction
 
   // Citation style (any CSL style id, e.g. "apa", "chicago-author-date", "modern-language-association")
   style: "chicago-author-date",
