@@ -1,0 +1,47 @@
+# Fetches your Zotero library with the secret ZOTERO_API_KEY and commits it as data/*.json.
+# Only needed for a PRIVATE library (config.js: source: "file").
+# Setup: Settings → Secrets and variables → Actions → New repository secret → ZOTERO_API_KEY
+name: Update Zotero data
+
+on:
+  workflow_dispatch:          # «Run workflow» button in the Actions tab
+  schedule:
+    - cron: "17 4 * * *"      # every night (UTC)
+  push:
+    branches: [main]
+    paths: [config.js, scripts/fetch_zotero.py, .github/workflows/zotero.yml]
+
+permissions:
+  contents: write             # allows the workflow to commit data/*.json
+
+concurrency:
+  group: zotero-data
+  cancel-in-progress: true
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Only for source "file"
+        id: mode
+        run: |
+          if grep -Eq '^\s*source:\s*"file"' config.js; then echo "file=true" >> "$GITHUB_OUTPUT";
+          else echo "config.js uses source \"api\" – nothing to do."; fi
+      - uses: actions/setup-python@v6
+        if: steps.mode.outputs.file == 'true'
+        with:
+          python-version: "3.12"
+      - name: Fetch library
+        if: steps.mode.outputs.file == 'true'
+        env:
+          ZOTERO_API_KEY: ${{ secrets.ZOTERO_API_KEY }}
+        run: python scripts/fetch_zotero.py
+      - name: Commit data if it changed
+        if: steps.mode.outputs.file == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898499+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet || git commit -m "data: update Zotero library"
+          git push

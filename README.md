@@ -29,7 +29,8 @@ DH Lab · University of Bern · Autumn semester 2026 (Session 6, Introduction to
 after `/collections/` in the URL are the key. Leave it `""` for the whole library.
 
 Other settings: `style` (any [CSL style](https://www.zotero.org/styles) id, e.g. `apa`),
-`groupBy` (`"none"`, `"year"`, `"type"`, `"tag"`), `showNotes` (child notes as annotations), `maxItems`.
+`groupBy` (`"none"`, `"year"`, `"type"`, `"tag"`), `showNotes` (child notes as annotations), `maxItems`,
+`source` (`"api"` = live from Zotero, `"file"` = from the GitHub Action, see below).
 
 ## Annotations
 
@@ -38,10 +39,31 @@ Write your comments as **child notes** in Zotero (right-click an item → *Add N
 
 ## Never put an API key here
 
-Everything in this repository, and everything the browser loads, is public. This template therefore only
-works with **public** libraries and sends no key. If your library must stay private, fetch it with a script
-on your computer (see the Python example in the Lab slides), save the result as a JSON file and publish that
-– or ask us about GitHub Actions with a secret.
+Everything in this repository, and everything the browser loads, is public. With `source: "api"` (the default)
+the page therefore only works with **public** libraries and sends no key.
+
+## Private library: GitHub Action with a secret key
+
+If your library must stay private, let GitHub fetch it for you. Note: the entries and notes shown on your
+site still become public – only the rest of your library and your key stay private.
+
+1. **Create a key**: [zotero.org/settings/keys](https://www.zotero.org/settings/keys) → *Create new private key*,
+   *Allow library access* (read only). Note your **userID** on the same page.
+2. **Store it as a secret**: in your repository *Settings → Secrets and variables → Actions →
+   New repository secret*. Name: `ZOTERO_API_KEY`, value: the key. Nobody can read it afterwards.
+3. **Edit `config.js`**: `source: "file"`, `libraryType: "users"`, `libraryId: "<your userID>"`
+   (and `collectionKey` if you want only one collection). Commit.
+4. **Run the workflow**: tab *Actions* → *Update Zotero data* → *Run workflow*. Green tick = done: it wrote
+   `data/items.json` and `data/notes.json` into the repository. It also runs every night and after each change
+   to `config.js`.
+5. Reload your site (`Cmd/Ctrl + Shift + R`). Pages can stay on *Deploy from a branch*.
+
+If the workflow fails, open the run and read the log: `403` = key missing, wrong or without access to that
+library; `404` = wrong `libraryId` or `collectionKey`. In your own fork, enable workflows once under *Actions*
+if GitHub asks.
+
+You can also run the script on your computer: `ZOTERO_API_KEY=… python scripts/fetch_zotero.py`
+(Python 3, no extra packages). Keep the key in a `.env` file – `.env` is already in `.gitignore`.
 
 ## Good to know
 
@@ -58,5 +80,7 @@ on your computer (see the Python example in the Lab slides), save the result as 
 `https://api.zotero.org/{groups|users}/{id}[/collections/{key}]/items/top?include=bib,data&style=…&limit=100&start=…`,
 reads the `Total-Results` header to know when to stop, and renders the `bib` field (the citation Zotero formats
 for you) plus tags. Notes come from a second request with `itemType=note`, matched by `parentItem`.
+With `source: "file"`, `scripts/fetch_zotero.py` makes the same requests (with the key) inside GitHub Actions
+(`.github/workflows/zotero.yml`) and the page reads the resulting JSON files instead.
 
 Licence: CC0 – take it, change it, no attribution needed.

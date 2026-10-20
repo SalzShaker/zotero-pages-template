@@ -24,6 +24,13 @@ async function getAll(path, params, max = CONFIG.maxItems) {
   return all;
 }
 
+// Data written by the GitHub Action (source: "file")
+async function getFile(path) {
+  const r = await fetch(path, { cache: "no-cache" });
+  if (!r.ok) throw new Error(`${r.status} – ${path} not found. Has the GitHub Action «Update Zotero data» run?`);
+  return r.json();
+}
+
 // Zotero notes are HTML: keep the text only (safer than inserting foreign HTML)
 function noteText(html) {
   const doc = new DOMParser().parseFromString(html, "text/html");
@@ -93,14 +100,24 @@ async function main() {
   $("intro").textContent = CONFIG.intro;
   $("source").href = `https://www.zotero.org/${CONFIG.libraryType}/${CONFIG.libraryId}` +
                      (CONFIG.collectionKey ? `/collections/${CONFIG.collectionKey}` : "");
-  $("dl-bibtex").href = `${scope}/items/top?format=bibtex&limit=100`;
-  $("dl-csljson").href = `${scope}/items/top?format=csljson&limit=100`;
+  const fromFile = CONFIG.source === "file";
+  if (fromFile) {
+    // private library: the data comes from the GitHub Action, the API link would not work for visitors
+    $("source").removeAttribute("href");
+    $("dl-bibtex").textContent = "JSON"; $("dl-bibtex").href = "data/items.json";
+    $("dl-csljson").parentNode.removeChild($("dl-csljson").previousSibling);
+    $("dl-csljson").remove();
+  } else {
+    $("dl-bibtex").href = `${scope}/items/top?format=bibtex&limit=100`;
+    $("dl-csljson").href = `${scope}/items/top?format=csljson&limit=100`;
+  }
   try {
-    const items = await getAll(`${scope}/items/top`, { include: "bib,data", style: CONFIG.style, sort: "creator" });
+    const items = fromFile ? await getFile("data/items.json")
+      : await getAll(`${scope}/items/top`, { include: "bib,data", style: CONFIG.style, sort: "creator" });
     const notes = new Map();
     if (CONFIG.showNotes) {
       // child notes of the whole library (collections do not list child notes)
-      const all = await getAll(`${base}/items`, { itemType: "note" }, 1000);
+      const all = fromFile ? await getFile("data/notes.json") : await getAll(`${base}/items`, { itemType: "note" }, 1000);
       for (const n of all) {
         const p = n.data.parentItem; if (!p) continue;
         if (!notes.has(p)) notes.set(p, []);
@@ -112,7 +129,8 @@ async function main() {
   } catch (err) {
     $("status").className = "error";
     $("status").textContent = `Could not load the library (${err.message}). ` +
-      "Check libraryType, libraryId and collectionKey in config.js – and that the library is public.";
+      (fromFile ? "Check the Actions tab: did «Update Zotero data» run successfully?"
+               : "Check libraryType, libraryId and collectionKey in config.js – and that the library is public.");
   }
 }
 
