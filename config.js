@@ -18,7 +18,7 @@ const CONFIG = {
   //   "file" – the page reads data/items.json, written by the GitHub Action with your secret key
   //            (private libraries; see README → «Private library»)
   source: "api",
-
+  collectionKey: "YUEU5V7F",
 
   // Citation style (any CSL style id, e.g. "apa", "chicago-author-date", "modern-language-association")
   style: "chicago-author-date",
