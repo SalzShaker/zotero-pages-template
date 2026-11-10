@@ -24,7 +24,7 @@ const CONFIG = {
   style: "chicago-author-date",
 
   // Group the list: "none", "year", "type" or "tag"
-  groupBy: "year",
+  groupBy: "tags",
 
   // Show child notes from Zotero below each entry (your annotations!)
   showNotes: true,
